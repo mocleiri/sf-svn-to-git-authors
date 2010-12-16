@@ -1,0 +1,18 @@
+To get the list of svn users you need to have a full checkout of the svn repository you will be importing.
+
+Next switch into the root directory of the checkedout working copy.
+
+Next run this command and redirect to a file:
+svn log | grep '^r[0-9]' | awk '{print $3}' | sort | uniq > svn-users.txt
+
+mvn clean package to build test.jar which is shaded to include all of the dependencies.
+
+java -jar test.jar svn-users.txt git-users.txt example.org
+
+This will create a file 'git-users.txt' with entries like this:
+
+username = FirstName LastName <username@example.org>
+
+Then you can initalize the svn clone like this:
+
+git svn clone -A git-users.txt https://svn-repo.org/... 

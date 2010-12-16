@@ -65,8 +65,9 @@ public class LookupSVNUsers {
 	 */
 	public static void main(String[] args) throws IOException {
 
-		if (args.length != 2) {
-			log.error("USAGE: <svn users file(input)> <git authors file (output)> ");
+		if (args.length != 3) {
+			log.error("USAGE: <svn users file(input)> <git authors file (output)> <email host: somwhere.org> ");
+			
 			System.exit(-1);
 		}
 		
@@ -82,10 +83,11 @@ public class LookupSVNUsers {
 		
 		for (String line : lines) {
 			
-			String svnUserName = line.trim().toLowerCase();
+			// intentionally handle both upper and lower case varients of the same name.
+			String svnUserName = line.trim();
 			
 			if (svnUserName.contains("("))
-				continue; // skip over this line
+				continue; // skip over this line as we can't use it on the url
 			
 			HttpClient client = new DefaultHttpClient();
 			
@@ -150,7 +152,7 @@ public class LookupSVNUsers {
 			
 			GitUser gUser = gitUserMap.get(userName);
 		
-			mergedList.add(gUser.getSvnAuthor() + " = " + gUser.getGitUser() + " <" + gUser.getSvnAuthor() + "@wicketstuff.org>");
+			mergedList.add(gUser.getSvnAuthor() + " = " + gUser.getGitUser() + " <" + gUser.getSvnAuthor() + "@"+args[3].trim()+">");
 			
 			
 		}
