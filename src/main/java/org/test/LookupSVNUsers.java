@@ -89,8 +89,7 @@ public class LookupSVNUsers {
 			if (svnUserName.contains("("))
 				continue; // skip over this line as we can't use it on the url
 			
-			HttpClient client = new DefaultHttpClient();
-			
+						
 			if (gitUserMap.keySet().contains(svnUserName))
 				continue; // skip this duplicate.
 			
@@ -98,39 +97,24 @@ public class LookupSVNUsers {
 			
 			boolean matched = false;
 			
-			
-			HttpResponse response = client.execute(new HttpGet("https://sourceforge.net/users/" + svnUserName));
-			
-			HttpEntity entity = response.getEntity();
-			
-			List<String> content = IOUtils.readLines(entity.getContent(), "UTF-8");
-			
-			int i = 0;
-			
-			for (String cLine : content) {
+			String gitName = extractFullName(svnUserName);
+
+			if (gitName == null) {
 				
-				String trimmed = cLine.trim();
-				
-				if (cLine.contains("/users/" + svnUserName)) {
-					
-					String[] parts = trimmed.split ("</a> ");
-					
-					if (parts.length > 1) {
-						String name = parts[1].replaceAll("</h1>", "");
-						
-						gitUserMap.put(svnUserName, new GitUser(svnUserName, name));
-						log.info("mapped user (" + svnUserName + ") to: " + name);
-						matched = true;
-						break;
-					}
-						
-				}
-				
-				
+				gitName = extractFullName (svnUserName.toLowerCase());
 			}
 			
-			if (!matched) {
+		
+			
+			if (gitName == null) {
 				unmatchedNameSet.add(svnUserName);
+			}
+			else {
+
+				gitUserMap.put(svnUserName, new GitUser(svnUserName, gitName));
+				log.info("mapped user (" + svnUserName + ") to: " + gitName);
+
+
 			}
 			
 			
@@ -152,20 +136,59 @@ public class LookupSVNUsers {
 			
 			GitUser gUser = gitUserMap.get(userName);
 		
-			mergedList.add(gUser.getSvnAuthor() + " = " + gUser.getGitUser() + " <" + gUser.getSvnAuthor() + "@"+args[3].trim()+">");
+			mergedList.add(gUser.getSvnAuthor() + " = " + gUser.getGitUser() + " <" + gUser.getSvnAuthor() + "@"+args[2].trim()+">");
 			
 			
 		}
-		
-		FileUtils.writeLines(new File (args[1]),"UTF-8", mergedList);
-		
+	
+
 		for (String username : unmatchedNameSet) {
 			
 			log.warn("failed to match SVN User = " + username);
+
+			// add in the unmatched entries as is.
+			mergedList.add (username + " = " + username + " <" + username + "@" + args[2].trim()+">");
 		}
+	
+		FileUtils.writeLines(new File (args[1]),"UTF-8", mergedList);
 		
 		
 		
+		
+	}
+
+	private static String extractFullName(String userName) throws IOException {
+
+		HttpClient client = new DefaultHttpClient();
+
+		HttpResponse response = client.execute(new HttpGet("https://sourceforge.net/users/" + userName));
+		
+		HttpEntity entity = response.getEntity();
+		
+		List<String> content = IOUtils.readLines(entity.getContent(), "UTF-8");
+		
+		int i = 0;
+		
+		for (String cLine : content) {
+			
+			String trimmed = cLine.trim();
+			
+			if (cLine.contains("/users/" + userName)) {
+				
+				String[] parts = trimmed.split ("</a> ");
+				
+				if (parts.length > 1) {
+					String name = parts[1].replaceAll("</h1>", "");
+			
+					return name;		
+				}
+					
+			}
+			
+			
+		}
+
+		return null;
 	}
 
 }
