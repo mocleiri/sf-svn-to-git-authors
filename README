@@ -1,17 +1,18 @@
-A set of programs to extract the list of svn users from a svn project hosted at sourceforge.net.  Then a Java program to scrape the full names of those users from the sourceforge web pages.
+A set of programs to extract the list of svn users from a svn project hosted at sourceforge.net.  Then a Java program to scrape the full names of those users from the sourceforge web pages.  
 
-This program was created for the conversion to github of the wicketstuff.org project but should.
+This program was created for the conversion to github of the wicketstuff.org project but could work for others.
 
 This repository does not contain the usersnames or the full names but the tools to extract them.
 
 Steps:
 1. run the ./data/wicketstuff/extract-wicketstuff-svn-users.sh to poll svn and write the distinct users into a file called wicketstuff-svn-users.txt
-2. mvn package to build the shaded jar.
-3. java -jar test.jar ./data/wicketstuff/wicketstuff-svn-users.txt git-authors.txt wicketstuff.org
+2. mvn clean package to build the shaded jar.
+3. java -jar target/svn-to-git-authors.jar ./data/wicketstuff/wicketstuff-svn-users.txt git-authors.txt wicketstuff.org
 
 This will create a file called git-authors.txt in the current directory with the format of:
 svn-username = Firstname Lastname <svn-username@wicketstuff.org>
 
 4. the git-authors.txt can be used during the clone like this: git svn clone -A git-authors.txt <svn url> <project name>
 
+Note: You should probably check the git-authors.txt file before doing the clone because not all names can be resolved.
 
