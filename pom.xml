@@ -1,9 +1,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>test</groupId>
-  <artifactId>test</artifactId>
+  <groupId>sf-svn-to-git-authors</groupId>
+  <artifactId>sf-svn-to-git-authors</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
+
+	<developers>
+
+		<developer>
+			<id>mocleiri</id>
+			<name>Michael O'Cleirigh</name>
+		</developer>
+
+	<developers> 
+
+  <licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>
+				This project (sf-svn-to-git-authors) is being released under the Apache 2 license.
+			</comments>
+		</license>
+	</licenses>
+ 
   <dependencies>
   	<dependency>
   		<groupId>commons-io</groupId>
