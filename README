@@ -9,7 +9,7 @@ This repository does not contain the usersnames or the full names but the tools 
 Steps:
 1. run the ./data/wicketstuff/extract-wicketstuff-svn-users.sh to poll svn and write the distinct users into a file called wicketstuff-svn-users.txt
 2. mvn clean package to build the shaded jar.
-3. java -jar target/svn-to-git-authors.jar ./data/wicketstuff/wicketstuff-svn-users.txt git-authors.txt wicketstuff.org
+3. java -jar target/sf-svn-to-git-authors.jar ./data/wicketstuff/wicketstuff-svn-users.txt git-authors.txt wicketstuff.org
 
 This will create a file called git-authors.txt in the current directory with the format of:
 svn-username = Firstname Lastname <svn-username@wicketstuff.org>
