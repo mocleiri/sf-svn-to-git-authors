@@ -4,19 +4,32 @@
 package org.test;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jgit.JGitText;
 import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.GitCommand;
+import org.eclipse.jgit.api.errors.CannotDeleteCurrentBranchException;
+import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.lib.CommitBuilder;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectDatabase;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectInserter;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryState;
+import org.eclipse.jgit.lib.RefUpdate.Result;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.slf4j.Logger;
 
@@ -64,16 +77,68 @@ public class RewriteHistory {
 			
 			// create new branch
 			
-			git.branchDelete().setBranchNames("rewrite-master").setForce(true).call();
+//			try {
+//				git.branchDelete().setBranchNames("rewrite-master").setForce(true).call();
+//			} catch (CannotDeleteCurrentBranchException e) {
+//				git.checkout().setName("master").call();
+//				git.branchDelete().setBranchNames("rewrite-master").setForce(true).call();
+//				
+//			}
 			
-			git.checkout().setCreateBranch(true).setName("rewrite-master");
+			Ref ref = git.checkout().setCreateBranch(true).setName("rewrite-master").setStartPoint(firstCommit).call();
+			
+			ObjectId newBaseId = ref.getObjectId();
 			
 			for (RevCommit revCommit : oldestToNewestCommits) {
 				
 				printCommit(revCommit);
 				
+				PersonIdent author = filterIdent(revCommit.getAuthorIdent());
 				
+				PersonIdent committer = filterIdent(revCommit.getAuthorIdent());
 				
+				revCommit.getTree();
+				
+				CommitBuilder commitBuilder = new CommitBuilder();
+				
+				commitBuilder.setParentId(newBaseId);
+				commitBuilder.setTreeId(revCommit.getTree().getId());
+				commitBuilder.setAuthor(author);
+				commitBuilder.setCommitter(committer);
+				commitBuilder.setEncoding(revCommit.getEncoding());
+				commitBuilder.setMessage(revCommit.getFullMessage());
+				
+				ObjectInserter inserter = repository.getObjectDatabase().newInserter();
+				newBaseId = inserter.insert(commitBuilder);
+				
+				inserter.flush();
+				
+				try {
+					Ref head = repository.getRef(Constants.HEAD);
+					
+					if (head == null)
+						throw new NoHeadException(
+								JGitText.get().commitOnRepoWithoutHEADCurrentlyNotSupported);
+
+					// determine the current HEAD and the commit it is referring to
+					ObjectId headId = repository.resolve(Constants.HEAD + "^{commit}");
+					RevWalk revWalk = new RevWalk(repository);
+					try {
+						RevCommit newCommit = revWalk.parseCommit(newBaseId);
+						RefUpdate ru = repository.updateRef(Constants.HEAD);
+						ru.setNewObjectId(newBaseId);
+						ru.setRefLogMessage("commit : "
+								+ newCommit.getShortMessage(), false);
+
+						ru.setExpectedOldObjectId(headId);
+						Result rc = ru.update();
+						
+					} finally {
+						revWalk.release();
+					}
+				} finally {
+					inserter.release();
+				}
 				
 				
 			}
@@ -110,6 +175,11 @@ public class RewriteHistory {
 		}
 	}
 
+	private static PersonIdent filterIdent(PersonIdent authorIdent) {
+		// TODO: add in the rewrite logic
+		return new PersonIdent("test", "test@test.com", authorIdent.getWhen(), authorIdent.getTimeZone());
+	}
+
 	private static void printCommit(RevCommit commit) {
 		
 		PersonIdent ident = commit.getCommitterIdent();
@@ -118,6 +188,7 @@ public class RewriteHistory {
 		log.info("user = " + ident.getName());
 		log.info("email = " + ident.getEmailAddress());
 		log.info("date = " + ident.getWhen());
+		log.info("comment = " + commit.getShortMessage());
 		
 	}
 
