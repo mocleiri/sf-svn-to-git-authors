@@ -18,10 +18,8 @@
 package org.test;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
-import org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.slf4j.Logger;
 
 /**
@@ -46,9 +44,9 @@ public class ExtractBranchMain {
 	 */
 	public static void main(String[] args) {
 	
-		if (args.length != 4) {
+		if (args.length != 7) {
 			
-			log.error("USAGE: <path to .git directory> <git authors file> <new branch name> <path prefix>");
+			log.error("USAGE: <path to .git directory> <git authors file> <initial branch> <new branch name> <path prefix> <git commit username> <git commit email>");
 			System.exit(-1);
 		}
 		
@@ -56,21 +54,27 @@ public class ExtractBranchMain {
 		
 		String gitAuthorsFile = args[1];
 		
-		String newBranchName = args[2];
+		String initialBranch = args[2];
 		
-		String pathPrefix = args[3];
+		String newBranchName = args[3];
+		
+		String pathPrefix = args[4];
+		
+		String gitCommitUser = args[5];
+		
+		String gitCommitEmail = args[6];
 		
 		try {
 			
 			
 			
 			
-			FilterHistory filter = new FilterHistory(new File (gitRepository), new DefaultCommitFilter(gitAuthorsFile));
+			RewriteGitHistory filter = new RewriteGitHistory(new File (gitRepository), new DefaultCommitFilter(gitAuthorsFile), new PersonIdent(gitCommitUser, gitCommitEmail));
 			
 //			filter.listMatchingCommits("master", pathPrefix);
 			
 			
-			filter.extractBranch("master", newBranchName, pathPrefix);
+			filter.extractBranch(initialBranch, newBranchName, pathPrefix);
 			
 		} catch (Exception e) {
 			log.error("failed to extract branch " + newBranchName, e);
