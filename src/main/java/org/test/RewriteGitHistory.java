@@ -414,12 +414,15 @@ public class RewriteGitHistory {
 		File workTree = git.getRepository().getWorkTree();
 
 		// only get the top level files and directories
-		IOFileFilter filter = new NotFileFilter(new PrefixFileFilter(includePath));
-		Collection<File> unneededFiles = FileUtils.listFiles(workTree, filter, filter);
 		
-		for (File file : unneededFiles) {
+		File[] topLevelFiles = workTree.listFiles();
+		
+		for (File file : topLevelFiles) {
 
-			rmCommand.addFilepattern(file.getAbsolutePath());
+			if (!file.getName().startsWith(includePath)) {
+				log.info("removing file = " + file.getAbsolutePath());
+				rmCommand.addFilepattern(file.getAbsolutePath());
+			}
 		}
 		
 		rmCommand.call();
